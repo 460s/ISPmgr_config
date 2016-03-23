@@ -44,13 +44,15 @@ case "$select" in
 	inst) 
 		if [ -f install.5.sh ]
 		then
-			red "Файл install.5.sh уже cуществует"
+			red "Файл install.5.sh уже cуществует, запускаем"
+			sh install.5.sh
 		else
 			if wget http://cdn.ispsystem.com/install.5.sh > /dev/null 2>&1
 			then
-				green "Шаг 2: Файл install.5.sh загружен"
+				green "Файл install.5.sh загружен, запускаем"
+				sh install.5.sh
 			else
-				red "Шаг 2: Файл install.5.sh не загружен"
+				red "Файл install.5.sh не загружен"
 			fi
 		fi	 
 	;;
