@@ -1,22 +1,24 @@
 #!/bin/sh
-# v 0.81
 
 #подсветка
 green(){
 	printf "\033[32;1m$@\033[0m\n"
 
 }
+
 red(){
 	printf "\033[31;1m$@\033[0m\n"
 
 }
-os() {
+
+#детектим ОС
+OSParams() { 
 	if [ -f /etc/redhat-release ]; then
 		ostype=centos
-		echo "$(rpm -qf /etc/redhat-release)"
+		osname="$(rpm -qf /etc/redhat-release)"
 	elif [ -f /etc/debian_version ]; then
 		ostype=debian
-		echo "$(lsb_release -s -i -c -r | xargs echo |sed 's; ;-;g')-$(dpkg --print-architecture)"
+		osname="$(lsb_release -s -i -c -r | xargs echo |sed 's; ;-;g')-$(dpkg --print-architecture)"
 		read osversion < /etc/debian_version  
 		if [ "$(echo ${osversion} | cut -c 1)" = 8 ]; then
 			osversion=jessie
@@ -26,8 +28,13 @@ os() {
 	fi
 }
 
-echo $osversion
+#детектим ОС
+MgrReload() { 
+	#while killall core; do echo "yes"; done
+	killall -9 core
+}
 
+OSParams
 #парсим аргументы
 if ! [ -z $1 ]
 then
@@ -39,8 +46,8 @@ then
 		*) red "Неверный аргумент";; 
 	esac
 else
-	os
 	echo
+	green $osname
 	green "Выберите необходимое действие:"
 	while [ -z $select ]
 	do
@@ -105,6 +112,7 @@ case "$select" in
 		if [ -f /usr/local/mgr5/etc/debug.conf ]; then
 			echo -e "* 9\n*.conn 4\n*.cache 4\n*.longtask 4\n*.cache 4\n*.sprite 4\n*.merge 4\n*.config 4\n*.stdconfig 4\n*.xml 4\n*.action 4\n*.period 4\n*.libmgr 4\n*.core_decoration 4\n*.output 4" > /usr/local/mgr5/etc/debug.conf
 			green "Файл debug.conf изменен" 
+			MgrReload
 		else
 			red "Файл debug.conf не существует"
 		fi
@@ -112,6 +120,7 @@ case "$select" in
 	test)
 		if [ -f /usr/local/mgr5/etc/ispmgr.conf ]; then
 			echo "Option TestMode" >> /usr/local/mgr5/etc/ispmgr.conf
+			MgrReload
 			green "Option TestMode добавлена" 
 		else
 			red "Файл etc/ispmgr.conf не существует"
