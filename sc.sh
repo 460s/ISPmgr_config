@@ -39,10 +39,12 @@ OSParams
 if ! [ -z $1 ]
 then
 	case "${1}" in
-		1) select=inst ;;
+		1) select=inst; instv=5 ;;
 		2) select=update ;;
 		3) select=debug ;;
-		4) select=test ;;
+		4) select=mtest ;;
+		5) select=gtest ;;
+		6) select=inst; instv=4 ;;
 		*) red "Неверный аргумент";; 
 	esac
 else
@@ -54,17 +56,21 @@ else
 		echo "1) Wget install.5.sh"
 		echo "2) Обновиться из репозитория"
 		echo "3) Установить debug.conf"
-		echo "4) Включить тесты"
+		echo "4) Включить магнитофон"
+		echo "5) Включить гуглотесты"
+		echo "6) Wget install.4.sh"
 		echo
 
 		read -p "Что будем делать: " n
 		echo
 
 		case "$n" in
-			1) select=inst ;;
+			1) select=inst; instv=5 ;;
 			2) select=update ;;
 			3) select=debug ;;
-			4) select=test ;;
+			4) select=mtest ;;
+			5) select=gtest ;;
+			6) select=inst; instv=4 ;;
 			*) ;;
 		esac
 	done
@@ -72,16 +78,16 @@ fi
 
 case "$select" in
 	inst) 
-		if [ -f install.5.sh ]; then
-			red "Файл install.5.sh уже cуществует, запускаем"
+		if [ -f install.$instv.sh ]; then
+			red "Файл install.$instv.sh уже cуществует, запускаем"
 			sh install.5.sh
 		else
-			if wget http://cdn.ispsystem.com/install.5.sh > /dev/null 2>&1
+			if wget http://cdn.ispsystem.com/install.$instv.sh > /dev/null 2>&1
 			then
-				green "Файл install.5.sh загружен, запускаем"
-				sh install.5.sh
+				green "Файл install.$instv.sh загружен, запускаем"
+				sh install.$instv.sh
 			else
-				red "Файл install.5.sh не загружен"
+				red "Файл install.$instv.sh не загружен"
 			fi
 		fi	 
 	;;
@@ -117,13 +123,24 @@ case "$select" in
 			red "Файл debug.conf не существует"
 		fi
 	;;
-	test)
+	mtest)
 		if [ -f /usr/local/mgr5/etc/ispmgr.conf ]; then
 			echo "Option TestMode" >> /usr/local/mgr5/etc/ispmgr.conf
 			MgrReload
 			green "Option TestMode добавлена" 
 		else
 			red "Файл etc/ispmgr.conf не существует"
+		fi
+	;;
+	gtest)
+		if [ $ostype = "debian" ]; then
+			echo 1
+			#apt-get install coremanager-dev gtest-isp-dev
+			#yum -y groupinstall "Development tools"
+		elif [$ostype = "centos" ]; then
+			#yum -y install coremanager-devel gtest-isp-devel
+			#apt-get install g++ make rsync (для Debain ln -s /usr/bin/make /usr/bin/gmake)
+			echo 2
 		fi
 	;;
 	*) ;;
