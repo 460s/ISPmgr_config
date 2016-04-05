@@ -32,6 +32,7 @@ OSParams() {
 MgrReload() { 
 	#while killall core; do echo "yes"; done
 	killall -9 core
+	green "Панель перезапущена"
 }
 
 OSParams
@@ -86,6 +87,16 @@ case "$select" in
 			then
 				green "Файл install.$instv.sh загружен, запускаем"
 				sh install.$instv.sh
+				case "$ostype" in
+        			centos)
+					yum -y install nano
+				;;
+				debian)
+					apt-get -y install nano
+				;;
+				*);;
+				esac
+				green "Мы установили тебе nano, твоя тачка официально прокачана"
 			else
 				red "Файл install.$instv.sh не загружен"
 			fi
@@ -116,7 +127,29 @@ case "$select" in
 	;;
 	debug)
 		if [ -f /usr/local/mgr5/etc/debug.conf ]; then
-			echo -e "* 9\n*.conn 4\n*.cache 4\n*.longtask 4\n*.cache 4\n*.sprite 4\n*.merge 4\n*.config 4\n*.stdconfig 4\n*.xml 4\n*.action 4\n*.period 4\n*.libmgr 4\n*.core_decoration 4\n*.output 4" > /usr/local/mgr5/etc/debug.conf
+			green "Конфиг какого manager необходим?:"
+			echo $debugconf
+			while [ -z "$debugconf" ]
+			do
+				echo "1) ISPmanager"
+				echo "2) BILLmanager"
+				echo
+
+				read -p "Что будем делать: " n
+				echo
+
+				case "$n" in
+					1) 
+						debugconf="* 9\n*.conn 4\n*.cache 4\n*.longtask 4\n*.cache 4\n*.sprite 4\n*.merge 4\n*.config 4\n*.stdconfig 4\n*.xml 4\n*.action 4\n*.period 4\n*.libmgr 4\n*.core_decoration 4\n*.output 4"
+					;;
+					2) 
+						debugconf="* 6\n*.db 6\n*.core 4\n*.conn 4\n*.merge 4\n*.xmli 4\n*.cache 4\n*.longtask 4" 
+				
+					;;
+					*) ;;
+				esac
+			done
+			echo -e "$debugconf" > /usr/local/mgr5/etc/debug.conf
 			green "Файл debug.conf изменен" 
 			MgrReload
 		else
