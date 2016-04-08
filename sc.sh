@@ -25,6 +25,9 @@ OSParams() {
 		elif [ "$(echo ${osversion} | cut -c 1)" = 7 ]; then
 			osversion=wheezy			
 		fi
+	else
+		red "На данной ОС скрипт не работает"
+		exit 0
 	fi
 }
 
@@ -44,8 +47,7 @@ then
 		2) select=update ;;
 		3) select=debug ;;
 		4) select=mtest ;;
-		5) select=gtest ;;
-		6) select=inst; instv=4 ;;
+		5) select=inst; instv=4 ;;
 		*) red "Неверный аргумент";; 
 	esac
 else
@@ -58,8 +60,7 @@ else
 		echo "2) Обновиться из репозитория"
 		echo "3) Установить debug.conf"
 		echo "4) Включить магнитофон"
-		echo "5) Включить гуглотесты (не использовать)"
-		echo "6) Wget install.4.sh"
+		echo "5) Wget install.4.sh"
 		echo
 
 		read -p "Что будем делать: " n
@@ -70,8 +71,7 @@ else
 			2) select=update ;;
 			3) select=debug ;;
 			4) select=mtest ;;
-			5) select=gtest ;;
-			6) select=inst; instv=4 ;;
+			5) select=inst; instv=4 ;;
 			*) ;;
 		esac
 	done
@@ -103,20 +103,29 @@ case "$select" in
 		fi	 
 	;;
 	update)
-		read -p "Имя репозитория: " n
-                echo
+		if [ $ostype = "debian" ]; then
+			reponame="$(cat /etc/apt/sources.list.d/ispsystem.list | awk '/ispsystem/{print $3}' | cut -d - -f 1)"
+		elif [ $ostype = "centos" ]; then
+			reponame="$(yum repolist | awk '/ispsystem/{if (!/base/)print $2}')"
+		fi
+		printf "Произойдет обновление из \033[32;1m$reponame\033[0m\n"
+		echo "Нажмите Enter для обновления из $reponame или введите имя нового репозитория"
+		read answer
+		if [ "$answer" != "" ]; then
+	                reponame=$answer
+	        fi
 
 		case "$ostype" in
         	centos)
 			rm -f /etc/yum.repos.d/ispsystem.repo
-			wget -O /etc/yum.repos.d/ispsystem.repo "http://intrepo.download.ispsystem.com/repo/centos/ispsystem-template.repo" && sed -i -r "s/TYPE/$n/g" /etc/yum.repos.d/ispsystem.repo
+			wget -O /etc/yum.repos.d/ispsystem.repo "http://intrepo.download.ispsystem.com/repo/centos/ispsystem-template.repo" && sed -i -r "s/TYPE/$reponame/g" /etc/yum.repos.d/ispsystem.repo
 			yum clean metadata
 			yum clean all
 			yum update			
 		;;
 		debian)
 			rm -f /etc/apt/sources.list.d/ispsystem.list
-			echo "deb http://intrepo.download.ispsystem.com/repo/debian $n-$osversion main" > /etc/apt/sources.list.d/ispsystem.list
+			echo "deb http://intrepo.download.ispsystem.com/repo/debian $reponame-$osversion main" > /etc/apt/sources.list.d/ispsystem.list
 			apt-get update
 			apt-get dist-upgrade
 		;;
@@ -143,8 +152,7 @@ case "$select" in
 						debugconf="* 9\n*.conn 4\n*.cache 4\n*.longtask 4\n*.cache 4\n*.sprite 4\n*.merge 4\n*.config 4\n*.stdconfig 4\n*.xml 4\n*.action 4\n*.period 4\n*.libmgr 4\n*.core_decoration 4\n*.output 4"
 					;;
 					2) 
-						debugconf="* 6\n*.db 6\n*.core 4\n*.conn 4\n*.merge 4\n*.xmli 4\n*.cache 4\n*.longtask 4" 
-				
+						debugconf="* 6\n*.db 6\n*.core 4\n*.conn 4\n*.merge 4\n*.xmli 4\n*.cache 4\n*.longtask 4" 				
 					;;
 					*) ;;
 				esac
