@@ -1,4 +1,5 @@
 #!/bin/sh
+#qq: d.syrovatskiy@ispsystem.com
 
 #подсветка
 green(){
@@ -106,7 +107,7 @@ case "$select" in
 		if [ $ostype = "debian" ]; then
 			reponame="$(cat /etc/apt/sources.list.d/ispsystem.list | awk '/ispsystem/{print $3}' | cut -d - -f 1)"
 		elif [ $ostype = "centos" ]; then
-			reponame="$(yum repolist | awk '/ispsystem/{if (!/base/)print $2}')"
+			reponame="$(yum repolist | awk '/ispsystem/{if (!/base/)print $2}' | cut -d - -f 2)"
 		fi
 		printf "Произойдет обновление из \033[32;1m$reponame\033[0m\n"
 		echo "Нажмите Enter для обновления из $reponame или введите имя нового репозитория"
