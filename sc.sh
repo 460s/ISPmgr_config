@@ -104,6 +104,7 @@ case "$select" in
 		fi	 
 	;;
 	update)
+		#yum repolist долго втыкает, нужно читать из файла
 		if [ $ostype = "debian" ]; then
 			reponame="$(cat /etc/apt/sources.list.d/ispsystem.list | awk '/ispsystem/{print $3}' | cut -d - -f 1)"
 		elif [ $ostype = "centos" ]; then
@@ -118,17 +119,17 @@ case "$select" in
 
 		case "$ostype" in
         	centos)
-			rm -f /etc/yum.repos.d/ispsystem.repo
+			rm -f /etc/yum.repos.d/ispsystem.repo #долго подключается к download
 			wget -O /etc/yum.repos.d/ispsystem.repo "http://intrepo.download.ispsystem.com/repo/centos/ispsystem-template.repo" && sed -i -r "s/TYPE/$reponame/g" /etc/yum.repos.d/ispsystem.repo
 			yum clean metadata
 			yum clean all
-			yum update			
+			yum -y update			
 		;;
 		debian)
 			rm -f /etc/apt/sources.list.d/ispsystem.list
 			echo "deb http://intrepo.download.ispsystem.com/repo/debian $reponame-$osversion main" > /etc/apt/sources.list.d/ispsystem.list
-			apt-get update
-			apt-get dist-upgrade
+			apt-get update # проверить надо ли -у
+			apt-get -y dist-upgrade
 		;;
 		*)
 

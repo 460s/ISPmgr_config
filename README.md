@@ -6,3 +6,6 @@ configure script for ISPmgr
 
 05/04/2016
 - nano install, debug for billmgr
+
+11/04/2016
+- upgrade old repo without press Y
