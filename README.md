@@ -9,3 +9,8 @@ configure script for ISPmgr
 
 11/04/2016
 - upgrade old repo without press Y
+
+13/04/2016
+- check nano install on centos
+- check avalable lic
+- centos repo read from file

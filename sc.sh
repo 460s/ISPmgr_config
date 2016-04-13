@@ -1,5 +1,6 @@
 #!/bin/sh
-#qq: d.syrovatskiy@ispsystem.com
+# qq: d.syrovatskiy@ispsystem.com
+# Спасибо, unstall.5.sh, ты меня многому научил
 
 #подсветка
 green(){
@@ -16,10 +17,10 @@ red(){
 OSParams() { 
 	if [ -f /etc/redhat-release ]; then
 		ostype=centos
-		osname="$(rpm -qf /etc/redhat-release)"
+		osname=$(rpm -qf /etc/redhat-release)
 	elif [ -f /etc/debian_version ]; then
 		ostype=debian
-		osname="$(lsb_release -s -i -c -r | xargs echo |sed 's; ;-;g')-$(dpkg --print-architecture)"
+		osname=$(lsb_release -s -i -c -r | xargs echo |sed 's; ;-;g')-$(dpkg --print-architecture)
 		read osversion < /etc/debian_version  
 		if [ "$(echo ${osversion} | cut -c 1)" = 8 ]; then
 			osversion=jessie
@@ -39,7 +40,17 @@ MgrReload() {
 	green "Панель перезапущена"
 }
 
+IpAddr(){
+	ipaddr=$(ip addr show | awk '$1 ~ /inet/ && $2 !~ /127.0.0|::1|fe80:/ {print $2}' |cut -d/ -f1 | head -1)
+	# Мир еще не готов к этому
+	#if [ -z "$(curl lic.ispsystem.com/ispmgr.lic?ip=$ipaddr 2>/dev/null)" ]; then
+	#	red "Лицензия отсутствует! Закажи на my.ispsystem.com"
+	#fi
+}
+
+IpAddr
 OSParams
+	
 #парсим аргументы
 if ! [ -z $1 ]
 then
@@ -49,6 +60,7 @@ then
 		3) select=debug ;;
 		4) select=mtest ;;
 		5) select=inst; instv=4 ;;
+		6) select=otherinst ;;
 		*) red "Неверный аргумент";; 
 	esac
 else
@@ -62,6 +74,7 @@ else
 		echo "3) Установить debug.conf"
 		echo "4) Включить магнитофон"
 		echo "5) Wget install.4.sh"
+		echo "6) Установить наш billmgr"
 		echo
 
 		read -p "Что будем делать: " n
@@ -73,6 +86,7 @@ else
 			3) select=debug ;;
 			4) select=mtest ;;
 			5) select=inst; instv=4 ;;
+			6) select=otherinst ;;
 			*) ;;
 		esac
 	done
@@ -90,35 +104,39 @@ case "$select" in
 				sh install.$instv.sh
 				case "$ostype" in
         			centos)
-					yum -y install nano
+					if ! rpm -q nano > /dev/null; then
+						yum -y install nano
+					fi
 				;;
 				debian)
 					apt-get -y install nano
 				;;
 				*);;
 				esac
-				green "Мы установили тебе nano, твоя тачка официально прокачана"
+				green "nano установлен"
 			else
 				red "Файл install.$instv.sh не загружен"
 			fi
 		fi	 
 	;;
 	update)
-		#yum repolist долго втыкает, нужно читать из файла
+		#Получаем имя репозитория
+		#Обновляемся из текущего репа или из введенного user'ом
 		if [ $ostype = "debian" ]; then
-			reponame="$(cat /etc/apt/sources.list.d/ispsystem.list | awk '/ispsystem/{print $3}' | cut -d - -f 1)"
+			reponame=$(cat /etc/apt/sources.list.d/ispsystem.list | awk '/ispsystem/{print $3}' | cut -d - -f 1)
 		elif [ $ostype = "centos" ]; then
-			reponame="$(yum repolist | awk '/ispsystem/{if (!/base/)print $2}' | cut -d - -f 2)"
+			reponame=$(cat /etc/yum.repos.d/ispsystem.repo | awk '/name/ && !/#/' | cut -d - -f 2)
 		fi
+		
 		printf "Произойдет обновление из \033[32;1m$reponame\033[0m\n"
 		echo "Нажмите Enter для обновления из $reponame или введите имя нового репозитория"
 		read answer
-		if [ "$answer" != "" ]; then
+		if [ -n "$answer" ]; then
 	                reponame=$answer
-	        fi
+	    fi
 
 		case "$ostype" in
-        	centos)
+        centos)
 			rm -f /etc/yum.repos.d/ispsystem.repo #долго подключается к download
 			wget -O /etc/yum.repos.d/ispsystem.repo "http://intrepo.download.ispsystem.com/repo/centos/ispsystem-template.repo" && sed -i -r "s/TYPE/$reponame/g" /etc/yum.repos.d/ispsystem.repo
 			yum clean metadata
@@ -131,9 +149,7 @@ case "$select" in
 			apt-get update # проверить надо ли -у
 			apt-get -y dist-upgrade
 		;;
-		*)
-
-		;;
+		*);;
 		esac
 	;;
 	debug)
@@ -175,16 +191,26 @@ case "$select" in
 			red "Файл etc/ispmgr.conf не существует"
 		fi
 	;;
-	gtest)
-		if [ $ostype = "debian" ]; then
-			echo 1
-			#apt-get install coremanager-dev gtest-isp-dev
-			#yum -y groupinstall "Development tools"
-		elif [$ostype = "centos" ]; then
-			#yum -y install coremanager-devel gtest-isp-devel
-			#apt-get install g++ make rsync (для Debain ln -s /usr/bin/make /usr/bin/gmake)
-			echo 2
-		fi
+	otherinst)
+		echo "Введите имя репозитория для установки Billmgr"
+		read reponame
+
+		case "$ostype" in
+        centos)
+			rm -f /etc/yum.repos.d/ispsystem.repo 
+			wget -O /etc/yum.repos.d/ispsystem.repo "http://intrepo.download.ispsystem.com/repo/centos/ispsystem-template.repo" && sed -i -r "s/TYPE/$reponame/g" /etc/yum.repos.d/ispsystem.repo
+			yum clean metadata
+			yum clean all
+			yum -y install billmanager			
+		;;
+		debian)
+			rm -f /etc/apt/sources.list.d/ispsystem.list
+			echo "deb http://intrepo.download.ispsystem.com/repo/debian $reponame-$osversion main" > /etc/apt/sources.list.d/ispsystem.list
+			apt-get update 
+			yum -y install billmanager
+		;;
+		*);;
+		esac
 	;;
 	*) ;;
 esac
