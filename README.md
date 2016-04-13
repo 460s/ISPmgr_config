@@ -14,3 +14,4 @@ configure script for ISPmgr
 - check nano install on centos
 - check avalable lic
 - centos repo read from file
+- install ispsystem bill
