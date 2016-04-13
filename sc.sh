@@ -207,7 +207,7 @@ case "$select" in
 			rm -f /etc/apt/sources.list.d/ispsystem.list
 			echo "deb http://intrepo.download.ispsystem.com/repo/debian $reponame-$osversion main" > /etc/apt/sources.list.d/ispsystem.list
 			apt-get update 
-			yum -y install billmanager
+			apt-get -y install billmanager
 		;;
 		*);;
 		esac
