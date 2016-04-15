@@ -2,6 +2,8 @@
 # qq: d.syrovatskiy@ispsystem.com
 # Спасибо, unstall.5.sh, ты меня многому научил
 
+ver="1.5"
+
 #подсветка
 green(){
 	printf "\033[32;1m$@\033[0m\n"
@@ -47,7 +49,23 @@ IpAddr(){
 	#	red "Лицензия отсутствует! Закажи на my.ispsystem.com"
 	#fi
 }
+CheckUpdate(){ ##некое гавно(
+	fullpath=$(curl -I https://github.com/460s/ISPmgr_config/releases/latest 2>/dev/null | awk '/tag/' | tr -d '\r')
+	gitver="${fullpath##*/}"
+	if [ $ver != $gitver ]; then
+		echo "Скрипт версии $ver будет обновлен до $gitver"
+		wget https://github.com/460s/ISPmgr_config/archive/$gitver.tar.gz > /dev/null 2>&1
+		extract=$(tar xvzf $gitver.tar.gz)
+		dirupd=$(echo $extract | cut -d / -f 1)
+		mv -f $dirupd/$0 ./$0
+		rm -f $gitver.tar.gz
+		rm -rf $dirupd	
+		green "Скрипт обновлен. Перезапустите скрипт."
+		exit 0	
+	fi
+}
 
+CheckUpdate
 IpAddr
 OSParams
 	

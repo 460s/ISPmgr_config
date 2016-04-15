@@ -15,3 +15,6 @@ configure script for ISPmgr
 - check avalable lic
 - centos repo read from file
 - install ispsystem bill
+
+15/04/2016
+- auto update script
