@@ -2,7 +2,7 @@
 # qq: d.syrovatskiy@ispsystem.com
 # Спасибо, unstall.5.sh, ты меня многому научил
 
-ver="1.6.1"
+ver="1.6.2"
 
 #подсветка
 green(){
@@ -59,7 +59,6 @@ CheckUpdate(){
 		echo "Скрипт версии $ver будет обновлен до $gitver"
 		wget https://github.com/460s/ISPmgr_config/archive/$gitver.tar.gz > /dev/null 2>&1
 		extract=$(tar xvzf $gitver.tar.gz)
-		echo $extract
 		dirupd=$(echo $extract | cut -d / -f 1)
 		sc="${0##*/}" 
 		mv -f $dirupd/$sc ./$sc
