@@ -63,9 +63,6 @@ CheckUpdate(){
 		dirupd=$(echo $extract | cut -d / -f 1)
 		sc="${0##*/}" 
 		mv -f $dirupd/$sc ./$sc
-		echo "$dirupd/$sc"
-		echo "./$sc"
-		echo "$sc"
 		rm -f $gitver.tar.gz
 		rm -rf $dirupd
 		if	grep "$gitver" $0; then
