@@ -2,7 +2,7 @@
 # qq: d.syrovatskiy@ispsystem.com
 # Спасибо, unstall.5.sh, ты меня многому научил
 
-ver="1.6.2"
+ver="1.6.5"
 
 #подсветка
 green(){
@@ -64,7 +64,7 @@ CheckUpdate(){
 		mv -f $dirupd/$sc ./$sc
 		rm -f $gitver.tar.gz
 		rm -rf $dirupd
-		if	grep "$gitver" $0; then
+		if	grep "$gitver" $sc; then
 			green "Скрипт обновлен. Перезапустите скрипт."
 		else
 			red "Скрипт не обновлен. Вам к d.syrovatskiy"
