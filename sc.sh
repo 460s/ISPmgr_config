@@ -2,7 +2,7 @@
 # qq: d.syrovatskiy@ispsystem.com
 # Спасибо, unstall.5.sh, ты меня многому научил
 
-ver="1.6"
+ver="1.6.1"
 
 #подсветка
 green(){
@@ -49,18 +49,30 @@ IpAddr(){
 	#	red "Лицензия отсутствует! Закажи на my.ispsystem.com"
 	#fi
 }
-CheckUpdate(){ ##некое гавно(
-	fullpath=$(curl -I https://github.com/460s/ISPmgr_config/releases/latest 2>/dev/null | awk '/tag/' | tr -d '\r')
+## $0 при вызове как alias будет _dirname_/sc.sh
+## $0 при вызове через sh sc будет sc.sh 
+## Для этого юзаем $sc
+CheckUpdate(){ 
+	fullpath=$(curl -I https://github.com/460s/ISPmgr_config/releases/latest 2>/dev/null | awk '/tag/' | tr -d '\r') ##некое гавно(
 	gitver="${fullpath##*/}"
 	if [ $ver != $gitver ]; then
 		echo "Скрипт версии $ver будет обновлен до $gitver"
 		wget https://github.com/460s/ISPmgr_config/archive/$gitver.tar.gz > /dev/null 2>&1
 		extract=$(tar xvzf $gitver.tar.gz)
+		echo $extract
 		dirupd=$(echo $extract | cut -d / -f 1)
-		mv -f $dirupd/$0 ./$0
+		sc="${0##*/}" 
+		mv -f $dirupd/$sc ./$sc
+		echo "$dirupd/$sc"
+		echo "./$sc"
+		echo "$sc"
 		rm -f $gitver.tar.gz
-		rm -rf $dirupd	
-		green "Скрипт обновлен. Перезапустите скрипт."
+		rm -rf $dirupd
+		if	grep "$gitver" $0; then
+			green "Скрипт обновлен. Перезапустите скрипт."
+		else
+			red "Скрипт не обновлен. Вам к d.syrovatskiy"
+		fi
 		exit 0	
 	fi
 }
