@@ -18,3 +18,7 @@ configure script for ISPmgr
 
 15/04/2016
 - auto update script
+
+18/04/2016
+- help added (sh sc.sh -h)
+- script alias (sc)

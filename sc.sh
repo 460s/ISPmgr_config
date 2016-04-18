@@ -2,7 +2,7 @@
 # qq: d.syrovatskiy@ispsystem.com
 # Спасибо, unstall.5.sh, ты меня многому научил
 
-ver="1.5"
+ver="1.6"
 
 #подсветка
 green(){
@@ -64,21 +64,50 @@ CheckUpdate(){ ##некое гавно(
 		exit 0	
 	fi
 }
+Usage()
+{
+        cat << EOU >&2
+
+Ключи:
+        $0 --help       Вывод списка ключей
+
+        $0 [ключ] 
+	-1  Запуск install.5.sh
+	-2  Обновиться из репозитория
+	-3  Установить debug.conf
+	-4  Включить магнитофон
+	-5  Запуск install.4.sh
+	-6  Установить наш billmgr
+EOU
+}
+AddAlias(){
+	if ! grep "alias sc" ~/.bashrc > /dev/null; then
+		chmod +x $0
+		echo "alias sc='sh $(pwd)/$0'" >> ~/.bashrc
+		. ~/.bashrc
+		echo "============="
+		echo "Добавлен псевдоним вашего скрипта"
+		printf "Скрипт можно вызвать в любом месте командой \033[32;1msc\033[0m\n"
+		echo "============="
+	fi
+}
 
 CheckUpdate
+AddAlias
 IpAddr
 OSParams
 	
 #парсим аргументы
-if ! [ -z $1 ]
+if [ -n "$1" ]
 then
 	case "${1}" in
-		1) select=inst; instv=5 ;;
-		2) select=update ;;
-		3) select=debug ;;
-		4) select=mtest ;;
-		5) select=inst; instv=4 ;;
-		6) select=otherinst ;;
+		-h | --help) Usage; exit 0 ;;
+		1 | -1) select=inst; instv=5 ;;
+		2 | -2) select=update ;;
+		3 | -3) select=debug ;;
+		4 | -4) select=mtest ;;
+		5 | -5) select=inst; instv=4 ;;
+		6 | -6) select=otherinst ;;
 		*) red "Неверный аргумент";; 
 	esac
 else
@@ -87,11 +116,11 @@ else
 	green "Выберите необходимое действие:"
 	while [ -z $select ]
 	do
-		echo "1) Wget install.5.sh"
+		echo "1) Запуск install.5.sh"
 		echo "2) Обновиться из репозитория"
 		echo "3) Установить debug.conf"
 		echo "4) Включить магнитофон"
-		echo "5) Wget install.4.sh"
+		echo "5) Запуск install.4.sh"
 		echo "6) Установить наш billmgr"
 		echo
 
