@@ -1,24 +1,17 @@
-# bash
-configure script for ISPmgr
+# Скрипт конфигурации VDS для использования продукции ISPsystem
 
-30/03/2016
-- wget Wget install.4.sh
+Скрипт состоит из одного файла sc.sh. 
+Возможности скрипта:
+- Загрузка и запуск install.5.sh (скрипт установки продуктов ISPsystem) с последующей установкой редактора nano
+- Обновление из текущего или указанного репозитория
+- Установка шаблона debug.con для ISPmgr и Billmgr
+- Включение магнитофонных тестов панели
+- Загрузка и запуск установщика старой продукции v.4 ISPsystem
+- Установка Billmgr из своего репозитория
 
-05/04/2016
-- nano install, debug for billmgr
+При запуске скрипт создает свой алиас и вы можете запускать его из любой директории командой `sc`, первый запуск производится
+из директории в которую вы скопировали скрипт командой `sh sc.sh`.
 
-11/04/2016
-- upgrade old repo without press Y
+Скрипт можно запускать с ключами, список ключей вы можете узнать с помощью ключа -h
 
-13/04/2016
-- check nano install on centos
-- check avalable lic
-- centos repo read from file
-- install ispsystem bill
 
-15/04/2016
-- auto update script
-
-18/04/2016
-- help added (sh sc.sh -h)
-- script alias (sc)

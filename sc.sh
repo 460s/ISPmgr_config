@@ -64,7 +64,7 @@ CheckUpdate(){
 		mv -f $dirupd/$sc ./$sc
 		rm -f $gitver.tar.gz
 		rm -rf $dirupd
-		if	grep "$gitver" $sc; then
+		if	grep "$gitver" $sc > /dev/null; then
 			green "Скрипт обновлен. Перезапустите скрипт."
 		else
 			red "Скрипт не обновлен. Вам к d.syrovatskiy"
@@ -80,6 +80,7 @@ Usage()
         $0 --help       Вывод списка ключей
 
         $0 [ключ] 
+    -v  Версия скрипта
 	-1  Запуск install.5.sh
 	-2  Обновиться из репозитория
 	-3  Установить debug.conf
@@ -110,6 +111,7 @@ if [ -n "$1" ]
 then
 	case "${1}" in
 		-h | --help) Usage; exit 0 ;;
+		-v) echo $ver ;;
 		1 | -1) select=inst; instv=5 ;;
 		2 | -2) select=update ;;
 		3 | -3) select=debug ;;
