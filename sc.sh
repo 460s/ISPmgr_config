@@ -1,6 +1,6 @@
 #!/bin/sh
 # qq: d.syrovatskiy@ispsystem.com
-# Спасибо, unstall.5.sh, ты меня многому научил
+# Спасибо, install.5.sh, ты меня многому научил
 
 ver="1.6.5"
 
