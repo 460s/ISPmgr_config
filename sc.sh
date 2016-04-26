@@ -2,7 +2,7 @@
 # qq: d.syrovatskiy@ispsystem.com
 # Спасибо, install.5.sh, ты меня многому научил
 
-ver="1.6.5"
+ver="1.6.6"
 
 #подсветка
 green(){
@@ -53,7 +53,7 @@ IpAddr(){
 ## $0 при вызове через sh sc будет sc.sh 
 ## Для этого юзаем $sc
 CheckUpdate(){ 
-	fullpath=$(curl -I https://github.com/460s/ISPmgr_config/releases/latest 2>/dev/null | awk '/tag/' | tr -d '\r') ##некое гавно(
+	fullpath=$(curl -I https://github.com/460s/ISPmgr_config/releases/latest 2>/dev/null | awk '/tag/' | tr -d '\r') ##все плохо(
 	gitver="${fullpath##*/}"
 	if [ $ver != $gitver ]; then
 		echo "Скрипт версии $ver будет обновлен до $gitver"
@@ -93,9 +93,9 @@ AddAlias(){
 	if ! grep "alias sc" ~/.bashrc > /dev/null; then
 		chmod +x $0
 		echo "alias sc='sh $(pwd)/$0'" >> ~/.bashrc
-		. ~/.bashrc
 		echo "============="
 		echo "Добавлен псевдоним вашего скрипта"
+		printf "Обновите список alias командой \033[32;1m. ~/.bashrc\033[0m\n"
 		printf "Скрипт можно вызвать в любом месте командой \033[32;1msc\033[0m\n"
 		echo "============="
 	fi
@@ -118,7 +118,7 @@ then
 		4 | -4) select=mtest ;;
 		5 | -5) select=inst; instv=4 ;;
 		6 | -6) select=otherinst ;;
-		*) red "Неверный аргумент";; 
+		*)  Usage; exit 0 ;; 
 	esac
 else
 	echo
