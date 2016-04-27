@@ -3,7 +3,8 @@
 # Спасибо, install.5.sh, ты меня многому научил
 
 ver="1.6.6"
-
+sc="${0##*/}"
+ 
 #подсветка
 green(){
 	printf "\033[32;1m$@\033[0m\n"
@@ -49,9 +50,7 @@ IpAddr(){
 	#	red "Лицензия отсутствует! Закажи на my.ispsystem.com"
 	#fi
 }
-## $0 при вызове как alias будет _dirname_/sc.sh
-## $0 при вызове через sh sc будет sc.sh 
-## Для этого юзаем $sc
+
 CheckUpdate(){ 
 	fullpath=$(curl -I https://github.com/460s/ISPmgr_config/releases/latest 2>/dev/null | awk '/tag/' | tr -d '\r') ##все плохо(
 	gitver="${fullpath##*/}"
@@ -60,11 +59,10 @@ CheckUpdate(){
 		wget https://github.com/460s/ISPmgr_config/archive/$gitver.tar.gz > /dev/null 2>&1
 		extract=$(tar xvzf $gitver.tar.gz)
 		dirupd=$(echo $extract | cut -d / -f 1)
-		sc="${0##*/}" 
-		mv -f $dirupd/$sc ./$sc
+		mv -f $dirupd/$sc $0
 		rm -f $gitver.tar.gz
 		rm -rf $dirupd
-		if	grep "$gitver" $sc > /dev/null; then
+		if	grep "$gitver" $0 > /dev/null; then
 			green "Скрипт обновлен. Перезапустите скрипт."
 		else
 			red "Скрипт не обновлен. Вам к d.syrovatskiy"
@@ -77,9 +75,9 @@ Usage()
         cat << EOU >&2
 
 Ключи:
-        $0 --help       Вывод списка ключей
+        $sc --help       Вывод списка ключей
 
-        $0 [ключ] 
+        $sc [ключ] 
     -v  Версия скрипта
 	-1  Запуск install.5.sh
 	-2  Обновиться из репозитория
@@ -92,7 +90,7 @@ EOU
 AddAlias(){
 	if ! grep "alias sc" ~/.bashrc > /dev/null; then
 		chmod +x $0
-		echo "alias sc='sh $(pwd)/$0'" >> ~/.bashrc
+		echo "alias sc='sh $(pwd)/$sc'" >> ~/.bashrc
 		echo "============="
 		echo "Добавлен псевдоним вашего скрипта"
 		printf "Обновите список alias командой \033[32;1m. ~/.bashrc\033[0m\n"
