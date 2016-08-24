@@ -1,8 +1,7 @@
 #!/bin/sh
 # qq: d.syrovatskiy@ispsystem.com
-# Спасибо, install.5.sh, ты меня многому научил
 
-ver="1.6.6"
+ver="1.7"
 sc="${0##*/}"
  
 #подсветка
@@ -36,40 +35,49 @@ OSParams() {
 	fi
 }
 
-#детектим ОС
+#перезагрузка панели
 MgrReload() { 
 	#while killall core; do echo "yes"; done
 	killall -9 core
 	green "Панель перезапущена"
 }
 
-IpAddr(){
+#Получаем IP и имя манагера
+CheckParam(){
+	mgrctl="/usr/local/mgr5/sbin/mgrctl"
+	if [ $($mgrctl > /dev/null 2>&1 ; echo $?) = "1" ]; then
+		mgr=$($mgrctl mgr | awk '/mgr/' | cut -d = -f2)	
+	fi
 	ipaddr=$(ip addr show | awk '$1 ~ /inet/ && $2 !~ /127.0.0|::1|fe80:/ {print $2}' |cut -d/ -f1 | head -1)
-	# Мир еще не готов к этому
-	#if [ -z "$(curl lic.ispsystem.com/ispmgr.lic?ip=$ipaddr 2>/dev/null)" ]; then
-	#	red "Лицензия отсутствует! Закажи на my.ispsystem.com"
-	#fi
 }
 
+#проверка обновлений скрипта
 CheckUpdate(){ 
-	fullpath=$(curl -I https://github.com/460s/ISPmgr_config/releases/latest 2>/dev/null | awk '/tag/' | tr -d '\r') ##все плохо(
+	fullpath=$(curl -I https://github.com/460s/ISPmgr_config/releases/latest 2>/dev/null | awk '/tag/' | tr -d '\r') ##curl может и не быть
 	gitver="${fullpath##*/}"
-	if [ $ver != $gitver ]; then
-		echo "Скрипт версии $ver будет обновлен до $gitver"
-		wget https://github.com/460s/ISPmgr_config/archive/$gitver.tar.gz > /dev/null 2>&1
-		extract=$(tar xvzf $gitver.tar.gz)
-		dirupd=$(echo $extract | cut -d / -f 1)
-		mv -f $dirupd/$sc $0
-		rm -f $gitver.tar.gz
-		rm -rf $dirupd
-		if	grep "$gitver" $0 > /dev/null; then
-			green "Скрипт обновлен. Перезапустите скрипт."
-		else
-			red "Скрипт не обновлен. Вам к d.syrovatskiy"
+	if ! [ -z $gitver ]
+	then
+		if [ $ver != $gitver ]; then
+			echo "Скрипт версии $ver будет обновлен до $gitver"
+			wget https://github.com/460s/ISPmgr_config/archive/$gitver.tar.gz > /dev/null 2>&1
+			extract=$(tar xvzf $gitver.tar.gz)
+			dirupd=$(echo $extract | cut -d / -f 1)
+			mv -f $dirupd/$sc $0
+			rm -f $gitver.tar.gz
+			rm -rf $dirupd
+			if	grep "$gitver" $0 > /dev/null; then
+				green "Скрипт обновлен. Перезапустите скрипт."
+			else
+				red "Скрипт не обновлен. Вам к d.syrovatskiy"
+			fi
+			exit 0	
 		fi
-		exit 0	
+	else
+		red "Скрипт не обновиться, на машине отсутствует curl"
 	fi
 }
+
+#вывод сообщений с подсказками
 Usage()
 {
         cat << EOU >&2
@@ -87,10 +95,13 @@ Usage()
 	-6  Установить наш billmgr
 EOU
 }
+
+#добавление скрипта в алиасы
 AddAlias(){
-	if ! grep "alias sc" ~/.bashrc > /dev/null; then
+	if ! grep "alias ыс" ~/.bashrc > /dev/null; then
 		chmod +x $0
 		echo "alias sc='sh $(pwd)/$sc'" >> ~/.bashrc
+		echo "alias ыс='sh $(pwd)/$sc'" >> ~/.bashrc
 		echo "============="
 		echo "Добавлен псевдоним вашего скрипта"
 		printf "Обновите список alias командой \033[32;1m. ~/.bashrc\033[0m\n"
@@ -101,7 +112,7 @@ AddAlias(){
 
 CheckUpdate
 AddAlias
-IpAddr
+CheckParam
 OSParams
 	
 #парсим аргументы
@@ -113,9 +124,10 @@ then
 		1 | -1) select=inst; instv=5 ;;
 		2 | -2) select=update ;;
 		3 | -3) select=debug ;;
-		4 | -4) select=mtest ;;
+		4 | -4) select=dtools ;;
 		5 | -5) select=inst; instv=4 ;;
 		6 | -6) select=otherinst ;;
+		7 | -7) select=autoupd ;;
 		*)  Usage; exit 0 ;; 
 	esac
 else
@@ -127,9 +139,10 @@ else
 		echo "1) Запуск install.5.sh"
 		echo "2) Обновиться из репозитория"
 		echo "3) Установить debug.conf"
-		echo "4) Включить магнитофон"
+		echo "4) Установить dev окружение"
 		echo "5) Запуск install.4.sh"
 		echo "6) Установить наш billmgr"
+		echo "7) Вкл/Выкл автообновлений"
 		echo
 
 		read -p "Что будем делать: " n
@@ -139,9 +152,10 @@ else
 			1) select=inst; instv=5 ;;
 			2) select=update ;;
 			3) select=debug ;;
-			4) select=mtest ;;
+			4) select=dtools ;;
 			5) select=inst; instv=4 ;;
 			6) select=otherinst ;;
+			7) select=autoupd ;;
 			*) ;;
 		esac
 	done
@@ -157,18 +171,22 @@ case "$select" in
 			then
 				green "Файл install.$instv.sh загружен, запускаем"
 				sh install.$instv.sh
+				$mgrctl -m $mgr srvparam autoupdate=noupdate sok=ok
 				case "$ostype" in
         			centos)
-					if ! rpm -q nano > /dev/null; then
-						yum -y install nano
-					fi
-				;;
-				debian)
-					apt-get -y install nano
-				;;
-				*);;
+						if ! rpm -q vim > /dev/null; then
+							yum -y install vim
+						fi
+						if ! rpm -q nano > /dev/null; then
+							yum -y install nano
+						fi
+					;;
+					debian)
+						apt-get -y install vim
+						apt-get -y install nano
+					;;
+					*);;
 				esac
-				green "nano установлен"
 			else
 				red "Файл install.$instv.sh не загружен"
 			fi
@@ -215,6 +233,8 @@ case "$select" in
 			do
 				echo "1) ISPmanager"
 				echo "2) BILLmanager"
+				echo "3) VMmanagerKVM"
+				echo "4) VMmanagerOVZ"
 				echo
 
 				read -p "Что будем делать: " n
@@ -227,6 +247,12 @@ case "$select" in
 					2) 
 						debugconf="* 6\n*.db 6\n*.core 4\n*.conn 4\n*.merge 4\n*.xmli 4\n*.cache 4\n*.longtask 4" 				
 					;;
+					3) 
+						debugconf="* 6\n*.db 4\n*.core 4\n*.conn 4\n*.merge 4\n*.xmli 4\n*.cache 4\n*.longtask 4\n*.vmmgr 9\n*.virt 9\n*.migratevm 9\n*.cloud 9" 				
+					;;
+					4) 
+						debugconf="* 6\n*.db 4\n*.core 4\n*.conn 4\n*.merge 4\n*.xmli 4\n*.cache 4\n*.longtask 4\n*.ve_openvz 9\n*.vemgr 9" 				
+					;;
 					*) ;;
 				esac
 			done
@@ -237,14 +263,16 @@ case "$select" in
 			red "Файл debug.conf не существует"
 		fi
 	;;
-	mtest)
-		if [ -f /usr/local/mgr5/etc/ispmgr.conf ]; then
-			echo "Option TestMode" >> /usr/local/mgr5/etc/ispmgr.conf
-			MgrReload
-			green "Option TestMode добавлена" 
-		else
-			red "Файл etc/ispmgr.conf не существует"
-		fi
+	dtools)
+		case "$ostype" in
+        centos)
+			yum -y install coremanager-devel gcc-c++ make unzip cgdb gtest-isp gtest-isp-devel
+        ;;
+		debian)
+			apt-get -y install coremanager-dev g++ make unzip cgdb gtest-isp gtest-isp-dev
+		;;
+		*);;
+		esac
 	;;
 	otherinst)
 		echo "Введите имя репозитория для установки Billmgr"
@@ -267,8 +295,16 @@ case "$select" in
 		*);;
 		esac
 	;;
+	autoupd)
+		if [ $($mgrctl -m $mgr srvparam | awk '/autoupdate/' | cut -d = -f2) = "noupdate" ] 
+		then
+			$mgrctl -m $mgr srvparam autoupdate=updatecore sok=ok > /dev/null
+			green "Включили автообновление"
+		else 
+			$mgrctl -m $mgr srvparam autoupdate=noupdate sok=ok > /dev/null
+			red "Выключили автообновление"
+		fi
+	;;
 	*) ;;
 esac
-
-
-
+#i=19; while [ $i != 24 ]; do ./sbin/mgrctl -m vemgr vm.edit name=vm.$i domain=vm.$i password=q1w2e3r4 sok=ok; i=$[i+1]; done
