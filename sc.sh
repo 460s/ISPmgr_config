@@ -1,7 +1,7 @@
 #!/bin/sh
 # qq: d.syrovatskiy@ispsystem.com
 
-ver="1.7"
+ver="1.7.1"
 sc="${0##*/}"
  
 #подсветка
@@ -90,9 +90,10 @@ Usage()
 	-1  Запуск install.5.sh
 	-2  Обновиться из репозитория
 	-3  Установить debug.conf
-	-4  Включить магнитофон
+	-4  Установить dev окружение
 	-5  Запуск install.4.sh
 	-6  Установить наш billmgr
+	-7  Вкл/Выкл автообновлений
 EOU
 }
 
@@ -163,15 +164,20 @@ fi
 
 case "$select" in
 	inst) 
+		#Запускаем скрипт установки 4/5 версии продукта
+		#Отключаем автообновления и ставим два текстовых редактора
 		if [ -f install.$instv.sh ]; then
 			red "Файл install.$instv.sh уже cуществует, запускаем"
-			sh install.5.sh
+			sh install.$instv.sh
+			CheckParam
+			$mgrctl -m $mgr srvparam autoupdate=noupdate sok=ok > /dev/null
 		else
 			if wget http://cdn.ispsystem.com/install.$instv.sh > /dev/null 2>&1
 			then
 				green "Файл install.$instv.sh загружен, запускаем"
 				sh install.$instv.sh
-				$mgrctl -m $mgr srvparam autoupdate=noupdate sok=ok
+				CheckParam
+				$mgrctl -m $mgr srvparam autoupdate=noupdate sok=ok > /dev/null
 				case "$ostype" in
         			centos)
 						if ! rpm -q vim > /dev/null; then
