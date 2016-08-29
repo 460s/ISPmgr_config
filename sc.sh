@@ -1,7 +1,7 @@
 #!/bin/sh
 # qq: d.syrovatskiy@ispsystem.com
 
-ver="1.7.1"
+ver="1.7.2"
 sc="${0##*/}"
  
 #подсветка
@@ -62,6 +62,7 @@ CheckUpdate(){
 			wget https://github.com/460s/ISPmgr_config/archive/$gitver.tar.gz > /dev/null 2>&1
 			extract=$(tar xvzf $gitver.tar.gz)
 			dirupd=$(echo $extract | cut -d / -f 1)
+			cat $dirupd/changelog | head -4
 			mv -f $dirupd/$sc $0
 			rm -f $gitver.tar.gz
 			rm -rf $dirupd
@@ -304,13 +305,29 @@ case "$select" in
 	autoupd)
 		if [ $($mgrctl -m $mgr srvparam | awk '/autoupdate/' | cut -d = -f2) = "noupdate" ] 
 		then
-			$mgrctl -m $mgr srvparam autoupdate=updatecore sok=ok > /dev/null
-			green "Включили автообновление"
-		else 
-			$mgrctl -m $mgr srvparam autoupdate=noupdate sok=ok > /dev/null
-			red "Выключили автообновление"
+			stneed="updatecore"
+			printf "Обновления выключены. \033[32;1mВключаем?\033[0m (y/n)" 
+		else
+			stneed="noupdate"
+			printf "Обновления включены. \033[31;1mВыключаем?\033[0m (y/n)" 
 		fi
+
+		read n 
+		
+		case "$n" in
+			y|Y) 
+				green "Готово!"
+				$mgrctl -m $mgr srvparam autoupdate=$stneed sok=ok > /dev/null
+			;;
+			n|N) 
+				red "Выход"
+				exit 0
+			;;
+			*) 
+				green "Готово!"
+				$mgrctl -m $mgr srvparam autoupdate=$stneed sok=ok > /dev/null
+			;;
+		esac
 	;;
 	*) ;;
 esac
-#i=19; while [ $i != 24 ]; do ./sbin/mgrctl -m vemgr vm.edit name=vm.$i domain=vm.$i password=q1w2e3r4 sok=ok; i=$[i+1]; done
