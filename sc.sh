@@ -1,7 +1,7 @@
 #!/bin/sh
 # qq: d.syrovatskiy@ispsystem.com
 
-ver="1.7.3"
+ver="1.7.4"
 sc="${0##*/}"
  
 #подсветка
@@ -128,7 +128,7 @@ then
 		3 | -3) select=debug ;;
 		4 | -4) select=dtools ;;
 		5 | -5) select=inst; instv=4 ;;
-		6 | -6) select=otherinst ;;
+		6 | -6) select=otherinst; instv=5 ;;
 		7 | -7) select=autoupd ;;
 		*)  Usage; exit 0 ;; 
 	esac
@@ -214,7 +214,7 @@ case "$select" in
 		echo "Нажмите Enter для обновления из $reponame или введите имя нового репозитория"
 		read answer
 		if [ -n "$answer" ]; then
-	                reponame=$answer
+			reponame=$answer
 	    fi
 
 		case "$ostype" in
@@ -286,24 +286,28 @@ case "$select" in
 	otherinst)
 		echo "Введите имя репозитория для установки Billmgr"
 		read reponame
-
-		case "$ostype" in
-        centos)
-			rm -f /etc/yum.repos.d/ispsystem.repo 
-			wget -O /etc/yum.repos.d/ispsystem.repo "http://intrepo.download.ispsystem.com/repo/centos/ispsystem-template.repo" && sed -i -r "s/TYPE/$reponame/g" /etc/yum.repos.d/ispsystem.repo
-			yum clean metadata
-			yum clean all
-			yum makecache
-			yum -y install billmanager			
-		;;
-		debian)
-			rm -f /etc/apt/sources.list.d/ispsystem.list
-			echo "deb http://intrepo.download.ispsystem.com/repo/debian $reponame-$osversion main" > /etc/apt/sources.list.d/ispsystem.list
-			apt-get update 
-			apt-get -y install billmanager
-		;;
-		*);;
-		esac
+		
+		if [ -f install.$instv.sh ]; then
+			red "Файл install.$instv.sh уже cуществует, запускаем"
+			sh install.$instv.sh --noinstall --release $reponame
+		else
+			if wget http://cdn.ispsystem.com/install.$instv.sh > /dev/null 2>&1
+			then
+				green "Файл install.$instv.sh загружен, запускаем"
+				sh install.$instv.sh --noinstall --release $reponame
+				case "$ostype" in	
+					centos)
+						yum -y install billmanager			
+					;;
+					debian)
+						apt-get -y install billmanager
+					;;
+					*);;
+				esac
+			else
+				red "Файл install.$instv.sh не загружен"
+			fi
+		fi
 	;;
 	autoupd)
 		if [ $($mgrctl -m $mgr srvparam | awk '/autoupdate/' | cut -d = -f2) = "noupdate" ] 

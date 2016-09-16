@@ -1,3 +1,6 @@
+[1.7.4]
+- переписана установка myBilli на основе install.5.sh
+
 [1.7.3]
 - yum makecache при установке billi
 
