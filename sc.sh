@@ -1,7 +1,7 @@
 #!/bin/sh
 # qq: d.syrovatskiy@ispsystem.com
 
-ver="1.7.4"
+ver="1.7.5"
 sc="${0##*/}"
  
 #подсветка
@@ -74,8 +74,37 @@ CheckUpdate(){
 			exit 0	
 		fi
 	else
-		red "Скрипт не обновиться, на машине отсутствует curl"
+		apt-get -y install curl
+		red "Установлен curl. Запустите скрипт повторно, он будет обновлен."
 	fi
+}
+
+#добавление скрипта в алиасы
+AddAlias(){
+	if ! grep "alias ыс" ~/.bashrc > /dev/null; then
+		chmod +x $0
+		echo "alias sc='sh $(pwd)/$sc'" >> ~/.bashrc
+		echo "alias ыс='sh $(pwd)/$sc'" >> ~/.bashrc
+		echo "============="
+		echo "Добавлен псевдоним вашего скрипта"
+		printf "Обновите список alias командой \033[32;1m. ~/.bashrc\033[0m\n"
+		printf "Скрипт можно вызвать в любом месте командой \033[32;1msc\033[0m\n"
+		echo "============="
+	fi
+}
+
+WgetInst(){
+		if [ -f install.$instv.sh ]; then
+			red "Файл install.$instv.sh уже cуществует, запускаем"
+		else
+			if wget http://cdn.ispsystem.com/install.$instv.sh > /dev/null 2>&1
+			then
+				green "Файл install.$instv.sh загружен, запускаем"
+			else
+				red "Файл install.$instv.sh не загружен"
+				exit 1
+			fi
+		fi
 }
 
 #вывод сообщений с подсказками
@@ -96,20 +125,6 @@ Usage()
 	-6  Установить наш billmgr
 	-7  Вкл/Выкл автообновлений
 EOU
-}
-
-#добавление скрипта в алиасы
-AddAlias(){
-	if ! grep "alias ыс" ~/.bashrc > /dev/null; then
-		chmod +x $0
-		echo "alias sc='sh $(pwd)/$sc'" >> ~/.bashrc
-		echo "alias ыс='sh $(pwd)/$sc'" >> ~/.bashrc
-		echo "============="
-		echo "Добавлен псевдоним вашего скрипта"
-		printf "Обновите список alias командой \033[32;1m. ~/.bashrc\033[0m\n"
-		printf "Скрипт можно вызвать в любом месте командой \033[32;1msc\033[0m\n"
-		echo "============="
-	fi
 }
 
 CheckUpdate
@@ -145,7 +160,6 @@ else
 		echo "5) Запуск install.4.sh"
 		echo "6) Установить наш billmgr"
 		echo "7) Вкл/Выкл автообновлений"
-		echo "8) Скрипт начальной загрузки"
 		echo
 
 		read -p "Что будем делать: " n
@@ -157,9 +171,8 @@ else
 			3) select=debug ;;
 			4) select=dtools ;;
 			5) select=inst; instv=4 ;;
-			6) select=otherinst ;;
+			6) select=otherinst; instv=5 ;;
 			7) select=autoupd ;;
-			8) select=startsc ;;
 			*) ;;
 		esac
 	done
@@ -169,37 +182,27 @@ case "$select" in
 	inst) 
 		#Запускаем скрипт установки 4/5 версии продукта
 		#Отключаем автообновления и ставим два текстовых редактора
-		if [ -f install.$instv.sh ]; then
-			red "Файл install.$instv.sh уже cуществует, запускаем"
-			sh install.$instv.sh
-			CheckParam
-			$mgrctl -m $mgr srvparam autoupdate=noupdate sok=ok > /dev/null
-		else
-			if wget http://cdn.ispsystem.com/install.$instv.sh > /dev/null 2>&1
-			then
-				green "Файл install.$instv.sh загружен, запускаем"
-				sh install.$instv.sh
-				CheckParam
-				$mgrctl -m $mgr srvparam autoupdate=noupdate sok=ok > /dev/null
-				case "$ostype" in
-        			centos)
-						if ! rpm -q vim > /dev/null; then
-							yum -y install vim
-						fi
-						if ! rpm -q nano > /dev/null; then
-							yum -y install nano
-						fi
-					;;
-					debian)
-						apt-get -y install vim
-						apt-get -y install nano
-					;;
-					*);;
-				esac
-			else
-				red "Файл install.$instv.sh не загружен"
-			fi
-		fi	 
+		WgetInst
+		
+		sh install.$instv.sh
+		CheckParam
+		$mgrctl -m $mgr srvparam autoupdate=noupdate sok=ok > /dev/null
+		
+		case "$ostype" in
+			centos)
+				if ! rpm -q vim > /dev/null; then
+					yum -y install vim
+				fi
+				if ! rpm -q nano > /dev/null; then
+					yum -y install nano
+				fi
+			;;
+			debian)
+				apt-get -y install vim
+				apt-get -y install nano
+			;;
+			*);;
+		esac	 
 	;;
 	update)
 		#Получаем имя репозитория
@@ -287,27 +290,22 @@ case "$select" in
 		echo "Введите имя репозитория для установки Billmgr"
 		read reponame
 		
-		if [ -f install.$instv.sh ]; then
-			red "Файл install.$instv.sh уже cуществует, запускаем"
-			sh install.$instv.sh --noinstall --release $reponame
-		else
-			if wget http://cdn.ispsystem.com/install.$instv.sh > /dev/null 2>&1
-			then
-				green "Файл install.$instv.sh загружен, запускаем"
+		WgetInst
+		
+		
+		case "$ostype" in	
+			centos)
+				rm -f /etc/yum.repos.d/ispsystem.repo
 				sh install.$instv.sh --noinstall --release $reponame
-				case "$ostype" in	
-					centos)
-						yum -y install billmanager			
-					;;
-					debian)
-						apt-get -y install billmanager
-					;;
-					*);;
-				esac
-			else
-				red "Файл install.$instv.sh не загружен"
-			fi
-		fi
+				yum -y install billmanager			
+			;;
+			debian)
+				rm -f /etc/apt/sources.list.d/ispsystem.list
+				sh install.$instv.sh --noinstall --release $reponame
+				apt-get -y install billmanager
+			;;
+			*);;
+		esac
 	;;
 	autoupd)
 		if [ $($mgrctl -m $mgr srvparam | awk '/autoupdate/' | cut -d = -f2) = "noupdate" ] 
