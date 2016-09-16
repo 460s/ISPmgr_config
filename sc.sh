@@ -1,7 +1,7 @@
 #!/bin/sh
 # qq: d.syrovatskiy@ispsystem.com
 
-ver="1.7.2"
+ver="1.7.3"
 sc="${0##*/}"
  
 #подсветка
@@ -145,6 +145,7 @@ else
 		echo "5) Запуск install.4.sh"
 		echo "6) Установить наш billmgr"
 		echo "7) Вкл/Выкл автообновлений"
+		echo "8) Скрипт начальной загрузки"
 		echo
 
 		read -p "Что будем делать: " n
@@ -158,6 +159,7 @@ else
 			5) select=inst; instv=4 ;;
 			6) select=otherinst ;;
 			7) select=autoupd ;;
+			8) select=startsc ;;
 			*) ;;
 		esac
 	done
@@ -226,7 +228,7 @@ case "$select" in
 		debian)
 			rm -f /etc/apt/sources.list.d/ispsystem.list
 			echo "deb http://intrepo.download.ispsystem.com/repo/debian $reponame-$osversion main" > /etc/apt/sources.list.d/ispsystem.list
-			apt-get update # проверить надо ли -у
+			apt-get update 
 			apt-get -y dist-upgrade
 		;;
 		*);;
@@ -291,6 +293,7 @@ case "$select" in
 			wget -O /etc/yum.repos.d/ispsystem.repo "http://intrepo.download.ispsystem.com/repo/centos/ispsystem-template.repo" && sed -i -r "s/TYPE/$reponame/g" /etc/yum.repos.d/ispsystem.repo
 			yum clean metadata
 			yum clean all
+			yum makecache
 			yum -y install billmanager			
 		;;
 		debian)
@@ -315,19 +318,19 @@ case "$select" in
 		read n 
 		
 		case "$n" in
-			y|Y) 
+			y|Y|д|Д) 
 				green "Готово!"
 				$mgrctl -m $mgr srvparam autoupdate=$stneed sok=ok > /dev/null
 			;;
-			n|N) 
+			n|N|н|Н) 
 				red "Выход"
 				exit 0
 			;;
-			*) 
-				green "Готово!"
-				$mgrctl -m $mgr srvparam autoupdate=$stneed sok=ok > /dev/null
-			;;
+			*) ;;
 		esac
 	;;
 	*) ;;
 esac
+
+
+#VDSmgr http://dl.ispsystem.com/Linux-cc6/x86_64/VDSmanager-Linux/
