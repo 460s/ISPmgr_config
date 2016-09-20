@@ -1,7 +1,7 @@
 #!/bin/sh
 # qq: d.syrovatskiy@ispsystem.com
 
-ver="1.8"
+ver="1.8.2"
 sc="${0##*/}"
  
 #подсветка
