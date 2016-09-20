@@ -51,6 +51,19 @@ CheckParam(){
 	ipaddr=$(ip addr show | awk '$1 ~ /inet/ && $2 !~ /127.0.0|::1|fe80:/ {print $2}' |cut -d/ -f1 | head -1)
 }
 
+#загрузка необходимого файла и его перемещение
+WgetMove(){
+	wget https://github.com/460s/ISPmgr_config/archive/$gitver.tar.gz > /dev/null 2>&1
+	extract=$(tar xvzf $gitver.tar.gz)
+	dirupd=$(echo $extract | cut -d / -f 1)
+	! [ -z $3 ] && cat $dirupd/changelog | head -4
+	mv -f $dirupd/$1 $2
+	out=$?
+	rm -f $gitver.tar.gz
+	rm -rf $dirupd
+	return $out
+}
+
 #проверка обновлений скрипта
 CheckUpdate(){ 
 	fullpath=$(curl -I https://github.com/460s/ISPmgr_config/releases/latest 2>/dev/null | awk '/tag/' | tr -d '\r') ##curl может и не быть
@@ -59,13 +72,7 @@ CheckUpdate(){
 	then
 		if [ $ver != $gitver ]; then
 			echo "Скрипт версии $ver будет обновлен до $gitver"
-			wget https://github.com/460s/ISPmgr_config/archive/$gitver.tar.gz > /dev/null 2>&1
-			extract=$(tar xvzf $gitver.tar.gz)
-			dirupd=$(echo $extract | cut -d / -f 1)
-			cat $dirupd/changelog | head -4
-			mv -f $dirupd/$sc $0
-			rm -f $gitver.tar.gz
-			rm -rf $dirupd
+			WgetMove $sc $0 upd
 			if	grep "$gitver" $0 > /dev/null; then
 				green "Скрипт обновлен. Перезапустите скрипт."
 			else
@@ -124,6 +131,7 @@ Usage()
 	-5  Запуск install.4.sh
 	-6  Установить наш billmgr
 	-7  Вкл/Выкл автообновлений
+	-8  Включить info скрипт
 EOU
 }
 
@@ -145,6 +153,7 @@ then
 		5 | -5) select=inst; instv=4 ;;
 		6 | -6) select=otherinst; instv=5 ;;
 		7 | -7) select=autoupd ;;
+		8 | -8) select=infosc ;;
 		*)  Usage; exit 0 ;; 
 	esac
 else
@@ -160,6 +169,7 @@ else
 		echo "5) Запуск install.4.sh"
 		echo "6) Установить наш billmgr"
 		echo "7) Вкл/Выкл автообновлений"
+		echo "8) Включить info скрипт"
 		echo
 
 		read -p "Что будем делать: " n
@@ -173,6 +183,7 @@ else
 			5) select=inst; instv=4 ;;
 			6) select=otherinst; instv=5 ;;
 			7) select=autoupd ;;
+			8) select=infosc ;;
 			*) ;;
 		esac
 	done
@@ -331,8 +342,17 @@ case "$select" in
 			*) ;;
 		esac
 	;;
+	infosc)
+		if WgetMove isp_info.sh /etc/profile.d/ 
+		then
+			green "Информер установлен. Его информация будет отображаться при следующем подключении к машине."
+			echo "Проверка: sh /etc/profile.d/isp_info.sh"
+		else
+			red "Что-то не так. Вам к d.syrovatskiy"
+		fi
+	;;
 	*) ;;
 esac
 
 
-#VDSmgr http://dl.ispsystem.com/Linux-cc6/x86_64/VDSmanager-Linux/
+
