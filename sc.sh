@@ -1,7 +1,7 @@
 #!/bin/sh
 # qq: d.syrovatskiy@ispsystem.com
 
-ver="1.8.2"
+ver="1.8.3"
 sc="${0##*/}"
  
 #подсветка
@@ -21,6 +21,7 @@ OSParams() {
 		ostype=centos
 		osname=$(rpm -qf /etc/redhat-release)
 	elif [ -f /etc/debian_version ]; then
+		export DEBIAN_FRONTEND=noninteractive
 		ostype=debian
 		osname=$(lsb_release -s -i -c -r | xargs echo |sed 's; ;-;g')-$(dpkg --print-architecture)
 		read osversion < /etc/debian_version  
@@ -124,6 +125,7 @@ Usage()
 
         $sc [ключ] 
     -v  Версия скрипта
+    -i  Вызов информера
 	-1  Запуск install.5.sh
 	-2  Обновиться из репозитория
 	-3  Установить debug.conf
@@ -144,8 +146,9 @@ OSParams
 if [ -n "$1" ]
 then
 	case "${1}" in
-		-h | --help) Usage; exit 0 ;;
-		-v) echo $ver ;;
+		-h|-р|h|р| --help) Usage; exit 0 ;;
+		-v|-м|v|м) echo $ver ;;
+		-i|-ш|i|ш) sh /etc/profile.d/isp_info.sh ;;
 		1 | -1) select=inst; instv=5 ;;
 		2 | -2) select=update ;;
 		3 | -3) select=debug ;;
