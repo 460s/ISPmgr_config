@@ -1,7 +1,7 @@
 #!/bin/sh
 # qq: d.syrovatskiy@ispsystem.com
 
-ver="1.8.3"
+ver="1.8.4"
 sc="${0##*/}"
  
 #подсветка
@@ -82,8 +82,10 @@ CheckUpdate(){
 			exit 0	
 		fi
 	else
+		apt-get update
 		apt-get -y install curl
 		red "Установлен curl. Запустите скрипт повторно, он будет обновлен."
+		exit 0
 	fi
 }
 

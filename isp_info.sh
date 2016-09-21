@@ -1,10 +1,10 @@
 purple(){
-	printf "\e[0;35m$@\033[0m\n"
+	printf "\033[0;35m$@\033[0m\n"
 
 }
 
 turq(){
-	printf "\e[0;36m$@\033[0m\n"
+	printf "\033[0;36m$@\033[0m\n"
 
 }
 
