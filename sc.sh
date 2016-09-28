@@ -1,7 +1,7 @@
 #!/bin/sh
 # qq: d.syrovatskiy@ispsystem.com
 
-ver="1.8.4"
+ver="1.8.5"
 sc="${0##*/}"
  
 #подсветка
@@ -10,9 +10,22 @@ green(){
 
 }
 
+turq(){
+	printf "\033[0;36m$@\033[0m\n"
+
+}
+
 red(){
 	printf "\033[31;1m$@\033[0m\n"
 
+}
+
+status(){	
+	if [ $? = 0 ]; then
+		printf "$@ \033[32;1m[OK]\033[0m\n"; return 0
+	else
+		printf "$@ \033[31;1m[FAIL]\033[0m\n"; return 1 
+	fi
 }
 
 #детектим ОС
@@ -52,6 +65,31 @@ CheckParam(){
 	ipaddr=$(ip addr show | awk '$1 ~ /inet/ && $2 !~ /127.0.0|::1|fe80:/ {print $2}' |cut -d/ -f1 | head -1)
 }
 
+#Проверяем есть ли такой пакет и ставим
+InstallPkg() {
+	case "$ostype" in
+		centos)
+			if ! rpm -q $1 >/dev/null 2>&1; then
+				echo "Устанавливаем пакет $1."
+				yum -y install $1 >/dev/null 2>&1
+				status "Установка $1"
+			fi
+		;;
+		debian)
+			if ! dpkg -s $1 >/dev/null 2>&1; then
+				echo "Устанавливаем пакет $1."
+				apt-get -y install $1 >/dev/null 2>&1
+				if ! status "Установка $1"; then
+					apt-get update > /dev/null
+					status "Обновление индекса пакетов"
+					CheckPkg $1
+				fi
+			fi			
+		;;
+		*) ;;
+	esac
+}
+
 #загрузка необходимого файла и его перемещение
 WgetMove(){
 	wget https://github.com/460s/ISPmgr_config/archive/$gitver.tar.gz > /dev/null 2>&1
@@ -67,25 +105,18 @@ WgetMove(){
 
 #проверка обновлений скрипта
 CheckUpdate(){ 
-	fullpath=$(curl -I https://github.com/460s/ISPmgr_config/releases/latest 2>/dev/null | awk '/tag/' | tr -d '\r') ##curl может и не быть
+	InstallPkg curl
+	fullpath=$(curl -I https://github.com/460s/ISPmgr_config/releases/latest 2>/dev/null | awk '/tag/' | tr -d '\r') 
 	gitver="${fullpath##*/}"
-	if ! [ -z $gitver ]
-	then
-		if [ $ver != $gitver ]; then
-			echo "Скрипт версии $ver будет обновлен до $gitver"
-			WgetMove $sc $0 upd
-			if	grep "$gitver" $0 > /dev/null; then
-				green "Скрипт обновлен. Перезапустите скрипт."
-			else
-				red "Скрипт не обновлен. Вам к d.syrovatskiy"
-			fi
-			exit 0	
+	if [ $ver != $gitver ]; then
+		echo "Скрипт версии $ver будет обновлен до $gitver"
+		WgetMove $sc $0 upd
+		if	grep "$gitver" $0 > /dev/null; then
+			green "Скрипт обновлен. Перезапустите скрипт."
+		else
+			red "Скрипт не обновлен. Вам к d.syrovatskiy"
 		fi
-	else
-		apt-get update
-		apt-get -y install curl
-		red "Установлен curl. Запустите скрипт повторно, он будет обновлен."
-		exit 0
+		exit 0	
 	fi
 }
 
@@ -125,11 +156,11 @@ Usage()
 Ключи:
         $sc --help       Вывод списка ключей
 
-        $sc [ключ] 
-    -v  Версия скрипта
-    -i  Вызов информера
+        $sc [ключ] [параметр]
+	-v  Версия скрипта
+	-i  Вызов информера
 	-1  Запуск install.5.sh
-	-2  Обновиться из репозитория
+	-2  <reponame>	Обновиться из репозитория. Reponame не обязателен.
 	-3  Установить debug.conf
 	-4  Установить dev окружение
 	-5  Запуск install.4.sh
@@ -139,11 +170,11 @@ Usage()
 EOU
 }
 
+OSParams
 CheckUpdate
 AddAlias
 CheckParam
-OSParams
-	
+
 #парсим аргументы
 if [ -n "$1" ]
 then
@@ -152,7 +183,7 @@ then
 		-v|-м|v|м) echo $ver ;;
 		-i|-ш|i|ш) sh /etc/profile.d/isp_info.sh ;;
 		1 | -1) select=inst; instv=5 ;;
-		2 | -2) select=update ;;
+		2 |u|-2) select=update reponame=$2;;
 		3 | -3) select=debug ;;
 		4 | -4) select=dtools ;;
 		5 | -5) select=inst; instv=4 ;;
@@ -204,37 +235,26 @@ case "$select" in
 		CheckParam
 		$mgrctl -m $mgr srvparam autoupdate=noupdate sok=ok > /dev/null
 		
-		case "$ostype" in
-			centos)
-				if ! rpm -q vim > /dev/null; then
-					yum -y install vim
-				fi
-				if ! rpm -q nano > /dev/null; then
-					yum -y install nano
-				fi
-			;;
-			debian)
-				apt-get -y install vim
-				apt-get -y install nano
-			;;
-			*);;
-		esac	 
+		InstallPkg vim
+		InstallPkg nano
 	;;
 	update)
 		#Получаем имя репозитория
 		#Обновляемся из текущего репа или из введенного user'ом
-		if [ $ostype = "debian" ]; then
-			reponame=$(cat /etc/apt/sources.list.d/ispsystem.list | awk '/ispsystem/{print $3}' | cut -d - -f 1)
-		elif [ $ostype = "centos" ]; then
-			reponame=$(cat /etc/yum.repos.d/ispsystem.repo | awk '/name/ && !/#/' | cut -d - -f 2)
+		if [ ! -n "$reponame" ]; then
+			if [ $ostype = "debian" ]; then
+				reponame=$(cat /etc/apt/sources.list.d/ispsystem.list | awk '/ispsystem/{print $3}' | cut -d - -f 1)
+			elif [ $ostype = "centos" ]; then
+				reponame=$(cat /etc/yum.repos.d/ispsystem.repo | awk '/name/ && !/#/' | cut -d - -f 2)
+			fi
+			
+			printf "Произойдет обновление из \033[32;1m$reponame\033[0m\n"
+			echo "Нажмите Enter для обновления из $reponame или введите имя нового репозитория"
+			read answer
+			if [ -n "$answer" ]; then
+				reponame=$answer
+			fi
 		fi
-		
-		printf "Произойдет обновление из \033[32;1m$reponame\033[0m\n"
-		echo "Нажмите Enter для обновления из $reponame или введите имя нового репозитория"
-		read answer
-		if [ -n "$answer" ]; then
-			reponame=$answer
-	    fi
 
 		case "$ostype" in
         centos)
@@ -306,8 +326,7 @@ case "$select" in
 		echo "Введите имя репозитория для установки Billmgr"
 		read reponame
 		
-		WgetInst
-		
+		WgetInst		
 		
 		case "$ostype" in	
 			centos)
