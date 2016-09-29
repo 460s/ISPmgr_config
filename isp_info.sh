@@ -8,6 +8,8 @@ turq(){
 
 }
 
+ipaddr=$(ip addr show | awk '$1 ~ /inet/ && $2 !~ /127.0.0|::1|fe80:/ {print $2}' |cut -d/ -f1 | head -1)
+
 mgrctl="/usr/local/mgr5/sbin/mgrctl"
 if [ $($mgrctl > /dev/null 2>&1 ; echo $?) = "1" ]; then
 	mgr=$($mgrctl mgr | awk '/mgr/' | cut -d = -f2)	
@@ -26,6 +28,7 @@ if [ -f /etc/redhat-release ]; then
 fi
 	
 purple "========"
+	turq "IP: $ipaddr"
 	turq "ОС: $osname"
 if ! [ -z $mgr ]; then
 	turq "$($core $mgr -i)"
