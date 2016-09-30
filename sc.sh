@@ -1,7 +1,7 @@
 #!/bin/sh
 # qq: d.syrovatskiy@ispsystem.com
 
-ver="1.8.6"
+ver="1.8.7"
 sc="${0##*/}"
  
 #подсветка
@@ -332,12 +332,12 @@ case "$select" in
 			centos)
 				rm -f /etc/yum.repos.d/ispsystem.repo
 				sh install.$instv.sh --noinstall --release $reponame
-				yum -y install billmanager			
+				yum -y install billmanager-ispsystem			
 			;;
 			debian)
 				rm -f /etc/apt/sources.list.d/ispsystem.list
 				sh install.$instv.sh --noinstall --release $reponame
-				apt-get -y install billmanager
+				apt-get -y install billmanager-ispsystem
 			;;
 			*);;
 		esac
