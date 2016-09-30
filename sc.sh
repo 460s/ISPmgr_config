@@ -1,7 +1,7 @@
 #!/bin/sh
 # qq: d.syrovatskiy@ispsystem.com
 
-ver="1.8.5"
+ver="1.8.6"
 sc="${0##*/}"
  
 #подсветка
@@ -82,7 +82,7 @@ InstallPkg() {
 				if ! status "Установка $1"; then
 					apt-get update > /dev/null
 					status "Обновление индекса пакетов"
-					CheckPkg $1
+					InstallPkg $1
 				fi
 			fi			
 		;;
@@ -128,8 +128,8 @@ AddAlias(){
 		echo "alias ыс='sh $(pwd)/$sc'" >> ~/.bashrc
 		echo "============="
 		echo "Добавлен псевдоним вашего скрипта"
-		printf "Обновите список alias командой \033[32;1m. ~/.bashrc\033[0m\n"
-		printf "Скрипт можно вызвать в любом месте командой \033[32;1msc\033[0m\n"
+		printf "Обновите список alias комачистый деббиндой \033[32;1m. ~/.bashrc\033[0m\n"
+		printf "Скрипт можно вызватьвыа в любом месте командой \033[32;1msc\033[0m\n"
 		echo "============="
 	fi
 }
