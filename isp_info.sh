@@ -8,6 +8,8 @@ turq(){
 
 }
 
+cd /usr/local/mgr5
+
 ipaddr=$(ip addr show | awk '$1 ~ /inet/ && $2 !~ /127.0.0|::1|fe80:/ {print $2}' |cut -d/ -f1 | head -1)
 
 mgrctl="/usr/local/mgr5/sbin/mgrctl"
@@ -38,3 +40,4 @@ else
 	turq "Продукция ISPsystem не найдена"	
 fi
 purple "========"
+
