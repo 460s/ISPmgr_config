@@ -330,12 +330,10 @@ case "$select" in
 		
 		case "$ostype" in	
 			centos)
-				rm -f /etc/yum.repos.d/ispsystem.repo
 				sh install.$instv.sh --noinstall --release $reponame
 				yum -y install billmanager-ispsystem			
 			;;
 			debian)
-				rm -f /etc/apt/sources.list.d/ispsystem.list
 				sh install.$instv.sh --noinstall --release $reponame
 				apt-get -y install billmanager-ispsystem
 			;;

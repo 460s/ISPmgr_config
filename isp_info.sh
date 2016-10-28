@@ -29,13 +29,13 @@ fi
 	
 purple "========"
 	turq "IP: $ipaddr"
-	turq "ОС: $osname"
+	turq "OS: $osname"
 if ! [ -z $mgr ]; then
 	turq "$($core $mgr -i)"
 	turq "$($core core -i)"
-	turq "Репозиторий: $reponame"
+	turq "Repo: $reponame"
 else
-	turq "Продукция ISPsystem не найдена"	
+	turq "ISP panet not found"	
 fi
 purple "========"
 
