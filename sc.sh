@@ -258,9 +258,8 @@ case "$select" in
 
 		case "$ostype" in
         centos)
-			rm -f /etc/yum.repos.d/ispsystem.repo #долго подключается к download
+			rm -f /etc/yum.repos.d/ispsystem.repo 
 			wget -O /etc/yum.repos.d/ispsystem.repo "http://intrepo.download.ispsystem.com/repo/centos/ispsystem-template.repo" && sed -i -r "s/TYPE/$reponame/g" /etc/yum.repos.d/ispsystem.repo
-			yum clean metadata
 			yum clean all
 			yum -y update			
 		;;
@@ -272,6 +271,8 @@ case "$select" in
 		;;
 		*);;
 		esac
+		
+		echo "nyx" > /usr/local/mgr5/etc/repo.version
 	;;
 	debug)
 		if [ -f /usr/local/mgr5/etc/debug.conf ]; then
