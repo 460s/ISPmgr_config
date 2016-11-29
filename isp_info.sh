@@ -12,17 +12,17 @@ ipaddr=$(ip addr show | awk '$1 ~ /inet/ && $2 !~ /127.0.0|::1|fe80:/ {print $2}
 
 mgrctl="/usr/local/mgr5/sbin/mgrctl"
 if [ $($mgrctl > /dev/null 2>&1 ; echo $?) = "1" ]; then
-	mgr=$($mgrctl mgr | awk '/mgr/' | cut -d = -f2)	
+	mgr=$($mgrctl mgr | awk '/mgr/' | cut -d = -f2 | head -n1)	
 	cd /usr/local/mgr5
 	core="/usr/local/mgr5/bin/core"
 fi
 
 if [ -f /etc/redhat-release ]; then
 		osname=$(rpm -qf /etc/redhat-release)
-		reponame=$(cat /etc/yum.repos.d/ispsystem.repo | awk '/name/ && !/#/' | cut -d - -f 2)
+		reponame=$(cat /etc/yum.repos.d/ispsystem.repo 2>/dev/null | awk '/name/ && !/#/' | cut -d - -f 2)
 	elif [ -f /etc/debian_version ]; then
 		osname=$(lsb_release -s -i -c -r | xargs echo |sed 's; ;-;g')-$(dpkg --print-architecture)
-		reponame=$(cat /etc/apt/sources.list.d/ispsystem.list | awk '/ispsystem/{print $3}' | cut -d - -f 1)
+		reponame=$(cat /etc/apt/sources.list.d/ispsystem.list 2>/dev/null | awk '/ispsystem/{print $3}' | cut -d - -f 1)
 	else
 		osname="Unnamed"
 fi
