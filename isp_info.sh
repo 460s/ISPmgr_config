@@ -35,7 +35,7 @@ if ! [ -z $mgr ]; then
 	turq "$($core core -i)"
 	turq "Repo: $reponame"
 else
-	turq "ISP panet not found"	
+	turq "ISP panel not found"	
 fi
 purple "========"
 
