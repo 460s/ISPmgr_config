@@ -11,7 +11,7 @@ turq(){
 ipaddr=$(ip addr show | awk '$1 ~ /inet/ && $2 !~ /127.0.0|::1|fe80:/ {print $2}' |cut -d/ -f1 | head -1)
 
 mgrctl="/usr/local/mgr5/sbin/mgrctl"
-if [ $($mgrctl > /dev/null 2>&1 ; echo $?) = "1" ]; then
+if [ $(timeout 5 $mgrctl > /dev/null 2>&1 ; echo $?) = "1" ]; then
 	mgr=$($mgrctl mgr | awk '/mgr/' | cut -d = -f2 | head -n1)	
 	cd /usr/local/mgr5
 	core="/usr/local/mgr5/bin/core"
